@@ -1,0 +1,30 @@
+version: "3.9"
+services:
+  nginx:
+    image: nginx:1.22-alpine
+    volumes:
+      - "./nginx/dev.conf:/etc/nginx/conf.d/default.conf"
+      - "./www/index.php:/var/www/index.php"
+    ports:
+      - "127.0.0.1:80:80"
+    depends_on:
+      - php
+    networks:
+      - internal
+  php:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - "./www/index.php:/var/www/index.php"
+      - "./healthcheck.sh:/var/www/healthcheck.sh"
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL","chmod +x healthcheck.sh&&./healthcheck.sh||exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+networks:
+  internal:
+    driver: bridge
